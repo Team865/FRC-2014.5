@@ -1,4 +1,4 @@
-from pyfrc import wpilib
+import wpiwrapper as wpilib
 
 
 class Auton(object):
