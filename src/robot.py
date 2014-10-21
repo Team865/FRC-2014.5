@@ -1,0 +1,73 @@
+from cheesyvision import CheesyVisionServer
+from software import CheesyDriveHandler
+from systems import Intake, Drivetrain
+import auton
+import wpiwrapper as wpilib
+
+
+class RobotGuy(wpilib.SimpleRobot):
+	def __init__(self):
+		super().__init__()
+		self.controller = wpilib.Joystick(1)
+		self.drivetrain = Drivetrain(1, 2, 1)
+		self.intake = Intake(5, 8, 3, 4)
+		self.compressor = wpilib.Compressor(1, 1)
+
+		self.ds = wpilib.DriverStation.GetInstance()
+		self.auton = auton.Auton(self)
+		self.cheesyvision = CheesyVisionServer()
+
+		self.cdh = CheesyDriveHandler(self)
+
+		# Auton mode
+		self.auton.select('noauton')
+
+	def RobotInit(self):
+		self.cheesyvision.start()
+		self.compressor.Start()
+
+	def Disabled(self):
+		while self.IsDisabled():
+			wpilib.Wait(0.01)
+
+	def Autonomous(self):
+		self.auton.run()
+		while self.IsAutonomous() and self.IsEnabled():
+			wpilib.Wait(0.1)
+	
+	def OperatorControl(self):
+		dog = self.GetWatchdog()
+		dog.SetEnabled(True)
+		dog.SetExpiration(0.25)
+		while self.IsOperatorControl() and self.IsEnabled():
+			rollerpower = self.controller.GetRawAxis(3)
+			if self.controller.GetRawButton(6):
+				self.drivetrain.shift('low')
+			else:
+				self.drivetrain.shift('high')
+
+			qt = self.controller.GetRawButton(5)
+			turn = self.controller.GetRawAxis(4)
+			if qt:
+				negturn = turn < 0
+				turn = abs(turn * turn) * (-1 if negturn else 1)  # could have easily done math.pow but whatever
+
+			self.cdh.cheesydrive(-self.controller.GetRawAxis(2), turn, qt, not self.controller.GetRawButton(6))
+
+			self.intake.setpower(rollerpower)
+			dog.Feed()
+			wpilib.Wait(0.04)
+
+
+def run():
+	robot = RobotGuy()
+	robot.StartCompetition()
+	return robot
+
+if __name__ == '__main__':
+	wpilib.require_version('2014.7.2')
+
+	import physics
+	wpilib.internal.physics_controller.setup(physics)
+
+	wpilib.run()
