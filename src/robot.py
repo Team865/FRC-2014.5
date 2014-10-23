@@ -1,5 +1,6 @@
+import sys
 from cheesyvision import CheesyVisionServer
-from software import CheesyDriveHandler
+from helpers import CheesyDriveHelper, IntakeHelper
 from systems import Intake, Drivetrain
 import auton
 import wpiwrapper as wpilib
@@ -9,18 +10,19 @@ class RobotGuy(wpilib.SimpleRobot):
 	def __init__(self):
 		super().__init__()
 		self.controller = wpilib.Joystick(1)
-		self.drivetrain = Drivetrain(1, 2, 1)
-		self.intake = Intake(5, 8, 3, 4)
+		self.drivetrain = Drivetrain(1, 2, 1, 1)
+		self.intake = Intake(5, 8, 3, 4, 2)
 		self.compressor = wpilib.Compressor(1, 1)
 
 		self.ds = wpilib.DriverStation.GetInstance()
 		self.auton = auton.Auton(self)
 		self.cheesyvision = CheesyVisionServer()
 
-		self.cdh = CheesyDriveHandler(self)
+		self.cdh = CheesyDriveHelper(self)
+		self.ith = IntakeHelper(self)
 
 		# Auton mode
-		self.auton.select('noauton')
+		self.auton.select('testball')
 
 	def RobotInit(self):
 		self.cheesyvision.start()
@@ -53,7 +55,7 @@ class RobotGuy(wpilib.SimpleRobot):
 				turn = abs(turn * turn) * (-1 if negturn else 1)  # could have easily done math.pow but whatever
 
 			self.cdh.cheesydrive(-self.controller.GetRawAxis(2), turn, qt, not self.controller.GetRawButton(6))
-
+			self.ith.runintake()
 			self.intake.setpower(rollerpower)
 			dog.Feed()
 			wpilib.Wait(0.04)
