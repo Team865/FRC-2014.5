@@ -65,31 +65,21 @@ class Auton(object):
 			pass  # keep checking!!!
 
 		r.intake.setpower(0)
-		test = GyroHelper(r)
-
-		maybeon = 0
-		while maybeon < 1:
-			test.update()
-			if test.ontarget():
-				maybeon += 0.005
-			else:
-				maybeon = 0
+		gyroPID = GyroHelper(r)
+		gyroPID.set_angle(180)
+		while not gyroPID.at_setpoint():
+			gyroPID.update()
 
 		r.drivetrain.setpower(0, 0)
 		r.intake.setpower(1)
-
 		while r.intake.hasball():
 			pass
 
 		wpilib.Wait(1)
-		test.setpoint = 0
-		maybeon = 0
-
-		while maybeon < 1:
-			test.update()
-			if test.ontarget():
-				maybeon += 0.005
-			else:
-				maybeon = 0
-
 		r.intake.setpower(0)
+
+		gyroPID.set_angle(0)
+		while not gyroPID.at_setpoint():
+			gyroPID.update()
+
+		r.drivetrain.setpower(0, 0)

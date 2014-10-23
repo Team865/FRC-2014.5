@@ -22,7 +22,7 @@ class RobotGuy(wpilib.SimpleRobot):
 		self.ith = IntakeHelper(self)
 
 		# Auton mode
-		self.auton.select('testball')
+		self.auton.select('noauton')
 
 	def RobotInit(self):
 		self.cheesyvision.start()
@@ -42,7 +42,6 @@ class RobotGuy(wpilib.SimpleRobot):
 		dog.SetEnabled(True)
 		dog.SetExpiration(0.25)
 		while self.IsOperatorControl() and self.IsEnabled():
-			rollerpower = self.controller.GetRawAxis(3)
 			if self.controller.GetRawButton(6):
 				self.drivetrain.shift('low')
 			else:
@@ -55,8 +54,7 @@ class RobotGuy(wpilib.SimpleRobot):
 				turn = abs(turn * turn) * (-1 if negturn else 1)  # could have easily done math.pow but whatever
 
 			self.cdh.cheesydrive(-self.controller.GetRawAxis(2), turn, qt, not self.controller.GetRawButton(6))
-			self.ith.runintake()
-			self.intake.setpower(rollerpower)
+			self.ith.do_intake(self.controller.GetRawButton(1), self.controller.GetRawButton(2))
 			dog.Feed()
 			wpilib.Wait(0.04)
 
